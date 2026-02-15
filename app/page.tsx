@@ -117,7 +117,10 @@ export default function Home() {
 
           {/* Main Content */}
           {!problem ? (
-            <ProblemSelector onSelectProblem={handleSelectProblem} />
+            <ProblemSelector 
+              onSelectProblem={handleSelectProblem}
+              attemptsRemaining={attemptsRemaining}
+            />
           ) : (
             <div className="space-y-4">
               {/* Back Button */}
@@ -135,6 +138,7 @@ export default function Home() {
                 problem={problem}
                 isAuthenticated={!!session?.user}
                 onComplete={handleComplete}
+                attemptsRemaining={attemptsRemaining}
               />
             </div>
           )}

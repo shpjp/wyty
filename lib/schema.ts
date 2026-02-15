@@ -24,6 +24,7 @@ export const problems = pgTable('Problem', {
   title: text('title').notNull(),
   description: text('description').notNull(),
   solution: text('solution').notNull(),
+  leetcodeUrl: text('leetcodeUrl').notNull(),
   category: categoryEnum('category').notNull(),
   difficulty: difficultyEnum('difficulty').notNull(),
   tags: text('tags').array().notNull(),

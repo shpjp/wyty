@@ -4,6 +4,8 @@ import { db } from "@/lib/db"
 import { dailyLimits } from "@/lib/schema"
 import { eq, and } from "drizzle-orm"
 
+const MAX_DAILY_ATTEMPTS = 3
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
@@ -31,7 +33,7 @@ export async function GET(req: NextRequest) {
       .limit(1)
 
     const attemptsUsed = dailyLimit?.attempts || 0
-    const attemptsRemaining = Math.max(0, 3 - attemptsUsed)
+    const attemptsRemaining = Math.max(0, MAX_DAILY_ATTEMPTS - attemptsUsed)
 
     return NextResponse.json({
       attemptsUsed,

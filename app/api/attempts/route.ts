@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { attempts, dailyLimits } from "@/lib/schema"
-import { eq, and } from "drizzle-orm"
+import { sql } from "drizzle-orm"
 import { z } from "zod"
+
+const MAX_DAILY_ATTEMPTS = 3
 
 const attemptSchema = z.object({
   problemId: z.string(),
@@ -32,51 +34,47 @@ export async function POST(req: NextRequest) {
     today.setHours(0, 0, 0, 0)
     const dateString = today.toISOString().split('T')[0]
 
-    const [dailyLimit] = await db
-      .select()
-      .from(dailyLimits)
-      .where(
-        and(
-          eq(dailyLimits.userId, session.user.id),
-          eq(dailyLimits.date, dateString)
-        )
-      )
-      .limit(1)
-
-    if (dailyLimit && dailyLimit.attempts >= 3) {
-      return NextResponse.json(
-        { error: "Daily attempt limit reached (3/3)" },
-        { status: 429 }
-      )
-    }
-
-    // Create attempt
-    const [attempt] = await db
-      .insert(attempts)
-      .values({
-        userId: session.user.id,
-        problemId: validatedData.problemId,
-        wpm: validatedData.wpm,
-        accuracy: validatedData.accuracy,
-        timeSpent: validatedData.timeSpent,
-        isCompleted: validatedData.isCompleted,
-      })
-      .returning()
-
-    // Update or create daily limit
-    if (dailyLimit) {
-      await db
-        .update(dailyLimits)
-        .set({ attempts: dailyLimit.attempts + 1 })
-        .where(eq(dailyLimits.id, dailyLimit.id))
-    } else {
-      await db
+    const attempt = await db.transaction(async (tx) => {
+      const limitRows = await tx
         .insert(dailyLimits)
         .values({
           userId: session.user.id,
           date: dateString,
           attempts: 1,
         })
+        .onConflictDoUpdate({
+          target: [dailyLimits.userId, dailyLimits.date],
+          set: {
+            attempts: sql`${dailyLimits.attempts} + 1`,
+          },
+          where: sql`${dailyLimits.attempts} < ${MAX_DAILY_ATTEMPTS}`,
+        })
+        .returning({ attempts: dailyLimits.attempts })
+
+      if (limitRows.length === 0) {
+        return null
+      }
+
+      const [createdAttempt] = await tx
+        .insert(attempts)
+        .values({
+          userId: session.user.id,
+          problemId: validatedData.problemId,
+          wpm: validatedData.wpm,
+          accuracy: validatedData.accuracy,
+          timeSpent: validatedData.timeSpent,
+          isCompleted: validatedData.isCompleted,
+        })
+        .returning()
+
+      return createdAttempt
+    })
+
+    if (!attempt) {
+      return NextResponse.json(
+        { error: `Daily attempt limit reached (${MAX_DAILY_ATTEMPTS}/${MAX_DAILY_ATTEMPTS})` },
+        { status: 429 }
+      )
     }
 
     return NextResponse.json(attempt, { status: 201 })

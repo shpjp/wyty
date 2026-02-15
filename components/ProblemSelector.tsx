@@ -8,6 +8,7 @@ type Problem = {
   title: string
   description: string
   solution: string
+  leetcodeUrl: string
   category: string
   difficulty: string
   tags: string[]
@@ -15,9 +16,10 @@ type Problem = {
 
 type ProblemSelectorProps = {
   onSelectProblem: (problem: Problem) => void
+  attemptsRemaining: number
 }
 
-export default function ProblemSelector({ onSelectProblem }: ProblemSelectorProps) {
+export default function ProblemSelector({ onSelectProblem, attemptsRemaining }: ProblemSelectorProps) {
   const [problems, setProblems] = useState<Problem[]>([])
   const [selectedCategory, setSelectedCategory] = useState<"DYNAMIC_PROGRAMMING" | "GRAPH" | null>(null)
   const [loading, setLoading] = useState(false)
@@ -211,7 +213,13 @@ export default function ProblemSelector({ onSelectProblem }: ProblemSelectorProp
           {filteredProblems.map((problem, index) => (
             <button
               key={problem.id}
-              onClick={() => onSelectProblem(problem)}
+              onClick={() => {
+                if (attemptsRemaining <= 0) {
+                  alert('Daily attempt limit reached! You have used all 3 attempts for today. Please come back tomorrow.');
+                  return;
+                }
+                onSelectProblem(problem);
+              }}
               className="group bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border-2 border-gray-200 dark:border-gray-700 
                          hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-xl transition-all duration-200
                          focus:outline-none focus:ring-4 focus:ring-blue-300"

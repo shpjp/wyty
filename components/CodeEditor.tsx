@@ -9,6 +9,7 @@ type CodeEditorProps = {
     title: string
     description: string
     solution: string
+    leetcodeUrl: string
     category: string
     difficulty: string
   }
@@ -18,6 +19,7 @@ type CodeEditorProps = {
     accuracy: number
     timeSpent: number
   }) => void
+  attemptsRemaining: number
 }
 
 type TimeMode = 60 | 120
@@ -26,6 +28,7 @@ export default function CodeEditor({
   problem,
   isAuthenticated,
   onComplete,
+  attemptsRemaining,
 }: CodeEditorProps) {
   const [userInput, setUserInput] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -88,6 +91,10 @@ export default function CodeEditor({
   }
 
   const startTyping = (mode: TimeMode) => {
+    if (isAuthenticated && attemptsRemaining <= 0) {
+      alert('Daily attempt limit reached! You have used all 3 attempts for today. Please come back tomorrow.');
+      return;
+    }
     setTimeMode(mode)
     setTimeRemaining(mode)
     setIsStarted(true)
@@ -202,8 +209,18 @@ export default function CodeEditor({
         <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 rounded-xl p-8 shadow-2xl text-white">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <h2 className="text-4xl font-bold mb-4">{problem.title}</h2>
-              <div className="flex items-center space-x-3">
+              <a 
+                href={problem.leetcodeUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-4xl font-bold mb-4 hover:underline hover:text-cyan-200 transition-colors inline-flex items-center gap-2 group"
+              >
+                {problem.title}
+                <svg className="w-6 h-6 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+              <div className="flex items-center space-x-3 mt-4">
                 <span
                   className={`px-4 py-2 rounded-lg text-sm font-bold border-2 shadow-md ${
                     problem.difficulty === "EASY"
@@ -220,21 +237,6 @@ export default function CodeEditor({
                 </span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Problem Description */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900 dark:to-blue-900 rounded-lg flex items-center justify-center">
-              <FaInfoCircle className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Problem Description</h3>
-          </div>
-          <div className="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-              {problem.description}
-            </p>
           </div>
         </div>
 
@@ -287,7 +289,17 @@ export default function CodeEditor({
       {/* Timer and Stats Header */}
       <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 rounded-xl p-6 shadow-2xl text-white">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-2xl font-bold">{problem.title}</h3>
+          <a 
+            href={problem.leetcodeUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-2xl font-bold hover:underline hover:text-cyan-200 transition-colors inline-flex items-center gap-2 group"
+          >
+            {problem.title}
+            <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
           <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
             problem.difficulty === "EASY"
               ? "bg-emerald-500"
