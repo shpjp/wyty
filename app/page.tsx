@@ -68,7 +68,7 @@ export default function Home() {
   }, [session, problem, fetchAttemptLimit])
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black">
       {/* Auth Modal with backdrop blur */}
       {showAuthModal && !session && (
         <AuthModal
@@ -96,19 +96,12 @@ export default function Home() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Attempt counter */}
           {session?.user && (
-            <div className="mb-6 bg-gradient-to-r from-cyan-50 via-blue-50 to-indigo-100 dark:from-cyan-950 dark:via-blue-950 dark:to-indigo-900 rounded-xl p-4 shadow-md border border-cyan-200 dark:border-cyan-700">
+            <div className="mb-6 bg-gray-950 border border-gray-800 rounded p-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Daily Attempts Remaining
-                  </span>
-                </div>
-                <span className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="text-sm font-medium text-gray-400">
+                  Daily Tests Remaining
+                </span>
+                <span className="text-xl font-bold text-white">
                   {attemptsRemaining}/3
                 </span>
               </div>
@@ -126,7 +119,7 @@ export default function Home() {
               {/* Back Button */}
               <button
                 onClick={handleBackToSelection}
-                className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors group"
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors group"
               >
                 <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -145,9 +138,9 @@ export default function Home() {
 
           {/* Guest notice */}
           {!session?.user && (
-            <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Guest Mode:</strong> You can practice, but your progress
+            <div className="mt-6 bg-gray-950 border border-gray-800 rounded p-4">
+              <p className="text-sm text-gray-400">
+                <strong className="text-white">Guest Mode:</strong> You can practice, but your progress
                 won't be saved. Login to track your stats and compete with
                 others!
               </p>

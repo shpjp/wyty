@@ -44,9 +44,12 @@ export default function CodeEditor({
     accuracy: 0,
     timeSpent: 0,
   })
+  const [isTyping, setIsTyping] = useState(false)
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null)
   
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const typingAreaRef = useRef<HTMLDivElement>(null)
   
   // Normalize solution: remove leading tabs/spaces from each line
   const normalizedSolution = problem.solution
@@ -58,6 +61,12 @@ export default function CodeEditor({
     // Reset on problem change
     resetTyping()
   }, [problem.id])
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeout) clearTimeout(typingTimeout)
+    }
+  }, [typingTimeout])
 
   useEffect(() => {
     if (isStarted && timeMode && timeRemaining !== null) {
@@ -87,7 +96,9 @@ export default function CodeEditor({
     setErrors(0)
     setTimeRemaining(null)
     setStats({ wpm: 0, accuracy: 0, timeSpent: 0 })
+    setIsTyping(false)
     if (timerRef.current) clearInterval(timerRef.current)
+    if (typingTimeout) clearTimeout(typingTimeout)
   }
 
   const startTyping = (mode: TimeMode) => {
@@ -99,7 +110,9 @@ export default function CodeEditor({
     setTimeRemaining(mode)
     setIsStarted(true)
     setStartTime(Date.now())
-    inputRef.current?.focus()
+    setCurrentIndex(0)
+    setIsTyping(false)
+    setTimeout(() => inputRef.current?.focus(), 100)
   }
 
   const calculateFinalStats = () => {
@@ -128,29 +141,20 @@ export default function CodeEditor({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!isStarted) return
 
-    const targetChar = normalizedSolution[currentIndex]
-
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      
-      if (targetChar === '\n') {
-        setUserInput(prev => prev + '\n')
-        setCurrentIndex(prev => prev + 1)
-        setCorrectChars(prev => prev + 1)
-        
-        if (currentIndex + 1 >= normalizedSolution.length) {
-          setIsCompleted(true)
-          if (timerRef.current) clearInterval(timerRef.current)
-          calculateFinalStats()
-        }
-      } else {
-        setErrors(prev => prev + 1)
-      }
-      return
-    }
-
     if (e.key === 'Backspace') {
       e.preventDefault()
+      if (currentIndex > 0) {
+        const prevChar = userInput[currentIndex - 1]
+        const expectedChar = normalizedSolution[currentIndex - 1]
+        
+        // If we're removing a correct character, decrease correctChars
+        if (prevChar === expectedChar) {
+          setCorrectChars(prev => Math.max(0, prev - 1))
+        }
+        
+        setUserInput(prev => prev.slice(0, -1))
+        setCurrentIndex(prev => Math.max(0, prev - 1))
+      }
       return
     }
 
@@ -164,75 +168,124 @@ export default function CodeEditor({
     if (!isStarted || isCompleted) return
 
     const value = e.target.value
+    
+    // Handle backspace case (value is shorter)
+    if (value.length < userInput.length) {
+      return // Backspace is handled in handleKeyDown
+    }
+    
     const newChar = value[value.length - 1]
     const targetChar = normalizedSolution[currentIndex]
 
-    if (newChar === targetChar) {
-      setUserInput(value)
-      setCurrentIndex(prev => prev + 1)
-      setCorrectChars(prev => prev + 1)
+    // Mark as typing (stops cursor blink)
+    setIsTyping(true)
+    if (typingTimeout) clearTimeout(typingTimeout)
+    const timeout = setTimeout(() => setIsTyping(false), 500)
+    setTypingTimeout(timeout)
 
-      if (currentIndex + 1 >= normalizedSolution.length) {
-        setIsCompleted(true)
-        if (timerRef.current) clearInterval(timerRef.current)
-        calculateFinalStats()
-      }
+    // Always progress, but track if correct or wrong
+    setUserInput(value)
+    setCurrentIndex(prev => prev + 1)
+    
+    if (newChar === targetChar) {
+      setCorrectChars(prev => prev + 1)
     } else {
       setErrors(prev => prev + 1)
+    }
+
+    // Check completion
+    if (currentIndex + 1 >= normalizedSolution.length) {
+      setIsCompleted(true)
+      if (timerRef.current) clearInterval(timerRef.current)
+      calculateFinalStats()
     }
   }
 
   const getDisplayText = () => {
-    return normalizedSolution.split('').map((char, index) => {
-      let className = "transition-colors"
+    const chars = normalizedSolution.split('')
+    const elements: JSX.Element[] = []
+    
+    chars.forEach((char, index) => {
+      let className = "char relative transition-colors duration-75"
+      const typedChar = userInput[index]
       
       if (index < currentIndex) {
-        className += " text-green-500"
+        // Already typed - check if correct or incorrect
+        if (typedChar === char) {
+          className += " text-green-400" // Correct
+        } else {
+          className += " text-red-400 bg-red-950/30" // Incorrect
+        }
       } else if (index === currentIndex) {
-        className += " bg-yellow-300 dark:bg-yellow-600 text-black"
+        // Current character - show cursor
+        className += " current text-gray-300"
       } else {
-        className += " text-gray-400 dark:text-gray-500"
+        // Untyped
+        className += " text-gray-600"
       }
 
-      return (
-        <span key={index} className={className}>
-          {char === '\n' ? '↵\n' : char}
-        </span>
-      )
+      if (char === '\n') {
+        elements.push(
+          <span key={index} className={className}>
+            ↵
+            {index === currentIndex && (
+              <span 
+                className={`cursor-blink ${isTyping ? 'cursor-active' : ''}`}
+                aria-hidden="true"
+              />
+            )}
+          </span>
+        )
+        elements.push(<br key={`br-${index}`} />)
+      } else {
+        elements.push(
+          <span key={index} className={className}>
+            {char === ' ' ? '\u00A0' : char}
+            {index === currentIndex && (
+              <span 
+                className={`cursor-blink ${isTyping ? 'cursor-active' : ''}`}
+                aria-hidden="true"
+              />
+            )}
+          </span>
+        )
+      }
     })
+    
+    return elements
   }
 
   if (!isStarted) {
     return (
       <div className="space-y-6">
         {/* Problem Header */}
-        <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 rounded-xl p-8 shadow-2xl text-white">
+        <div className="bg-gray-950 border border-gray-800 rounded p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <a 
                 href={problem.leetcodeUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-4xl font-bold mb-4 hover:underline hover:text-cyan-200 transition-colors inline-flex items-center gap-2 group"
+                className="text-3xl font-bold text-white hover:text-gray-300 transition-colors inline-flex items-center gap-2 group"
               >
                 {problem.title}
-                <svg className="w-6 h-6 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
               <div className="flex items-center space-x-3 mt-4">
                 <span
-                  className={`px-4 py-2 rounded-lg text-sm font-bold border-2 shadow-md ${
+                  className={`px-3 py-1 rounded text-sm font-bold border ${
                     problem.difficulty === "EASY"
-                      ? "bg-emerald-500 border-emerald-300 text-white"
+                      ? "bg-gray-800 border-gray-700 text-gray-200"
                       : problem.difficulty === "MEDIUM"
-                      ? "bg-amber-500 border-amber-300 text-white"
-                      : "bg-rose-500 border-rose-300 text-white"
+                      ? "bg-gray-700 border-gray-600 text-gray-100"
+                      : "bg-gray-600 border-gray-500 text-white"
                   }`}
                 >
                   {problem.difficulty}
                 </span>
-                <span className="px-4 py-2 rounded-lg text-sm font-bold bg-white/20 backdrop-blur border-2 border-white/30">
+                <span className="px-3 py-1 rounded text-sm font-medium bg-gray-900 text-gray-300 border border-gray-800">
                   {problem.category === "DYNAMIC_PROGRAMMING" ? "Dynamic Programming" : "Graph Algorithms"}
                 </span>
               </div>
@@ -241,42 +294,27 @@ export default function CodeEditor({
         </div>
 
         {/* Time Mode Selection */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 rounded-full mb-4">
-              <FaClock className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Time Mode</h3>
-            <p className="text-gray-600 dark:text-gray-400">Choose your challenge duration</p>
+        <div className="bg-gray-950 border border-gray-800 rounded p-8">
+          <div className="text-center mb-8">
+            <h3 className="text-5xl font-bold text-white mb-2">Find Your Type</h3>
+            <p className="text-xl text-gray-400">What's your type? Choose your duration.</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <button
               onClick={() => startTyping(60)}
-              className="group relative bg-gradient-to-br from-cyan-50 via-blue-50 to-cyan-100 dark:from-cyan-950 dark:via-blue-950 dark:to-cyan-900 
-                         border-3 border-cyan-300 dark:border-cyan-600 rounded-xl p-8 
-                         hover:shadow-xl hover:scale-105 transition-all duration-300
-                         focus:outline-none focus:ring-4 focus:ring-cyan-300"
+              className="group bg-black border-2 border-gray-800 hover:border-white rounded p-8 transition-all duration-300"
             >
-              <div className="text-5xl font-black text-cyan-600 dark:text-cyan-400 mb-2">60</div>
-              <div className="text-lg font-semibold text-gray-700 dark:text-gray-300">seconds</div>
-              <div className="absolute top-3 right-3 w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <FaBolt className="w-4 h-4 text-white" />
-              </div>
+              <div className="text-6xl font-black text-white mb-2">60</div>
+              <div className="text-lg font-medium text-gray-400 group-hover:text-white transition-colors">seconds</div>
             </button>
 
             <button
               onClick={() => startTyping(120)}
-              className="group relative bg-gradient-to-br from-violet-50 via-purple-50 to-violet-100 dark:from-violet-950 dark:via-purple-950 dark:to-violet-900 
-                         border-3 border-violet-300 dark:border-violet-600 rounded-xl p-8 
-                         hover:shadow-xl hover:scale-105 transition-all duration-300
-                         focus:outline-none focus:ring-4 focus:ring-violet-300"
+              className="group bg-black border-2 border-gray-800 hover:border-white rounded p-8 transition-all duration-300"
             >
-              <div className="text-5xl font-black text-violet-600 dark:text-violet-400 mb-2">120</div>
-              <div className="text-lg font-semibold text-gray-700 dark:text-gray-300">seconds</div>
-              <div className="absolute top-3 right-3 w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <FaBolt className="w-4 h-4 text-white" />
-              </div>
+              <div className="text-6xl font-black text-white mb-2">120</div>
+              <div className="text-lg font-medium text-gray-400 group-hover:text-white transition-colors">seconds</div>
             </button>
           </div>
         </div>
@@ -286,90 +324,89 @@ export default function CodeEditor({
 
   return (
     <div className="space-y-6">
-      {/* Timer and Stats Header */}
-      <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 rounded-xl p-6 shadow-2xl text-white">
-        <div className="flex items-center justify-between mb-4">
+      {/* Compact Header with Timer */}
+      <div className="bg-gray-950 border border-gray-800 rounded p-4">
+        <div className="flex items-center justify-between">
           <a 
             href={problem.leetcodeUrl} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-2xl font-bold hover:underline hover:text-cyan-200 transition-colors inline-flex items-center gap-2 group"
+            className="text-xl font-bold text-white hover:text-gray-300 transition-colors inline-flex items-center gap-2 group"
           >
             {problem.title}
-            <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </a>
-          <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
-            problem.difficulty === "EASY"
-              ? "bg-emerald-500"
-              : problem.difficulty === "MEDIUM"
-              ? "bg-amber-500"
-              : "bg-rose-500"
-          }`}>
-            {problem.difficulty}
-          </span>
+          
+          <div className="flex items-center space-x-4">
+            <span className={`px-3 py-1 rounded text-xs font-bold border ${
+              problem.difficulty === "EASY"
+                ? "bg-gray-800 border-gray-700 text-gray-200"
+                : problem.difficulty === "MEDIUM"
+                ? "bg-gray-700 border-gray-600 text-gray-100"
+                : "bg-gray-600 border-gray-500 text-white"
+            }`}>
+              {problem.difficulty}
+            </span>
+            
+            {/* Compact Timer */}
+            {!isCompleted && (
+              <div className="flex items-center space-x-2 bg-black border border-gray-800 px-4 py-2 rounded">
+                <FaClock className="w-3 h-3 text-gray-400" />
+                <span className="text-lg font-bold text-white">{timeRemaining}s</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Stats Display */}
-      {!isCompleted ? (
-        <div className="bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 rounded-xl p-10 shadow-2xl border-4 border-cyan-500 dark:border-cyan-600">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 rounded-full mb-4 animate-pulse">
-              <span className="text-5xl font-black text-white">{timeRemaining}</span>
-            </div>
-            <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">seconds remaining</div>
-            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center space-x-2">
-              <FaClock className="w-4 h-4" />
-              <span>Keep typing to complete the solution!</span>
-            </div>
-          </div>
-        </div>
-      ) : (
+      {isCompleted && (
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-cyan-50 via-blue-50 to-cyan-100 dark:from-cyan-950 dark:via-blue-950 dark:to-cyan-900 
-                          rounded-xl p-6 shadow-lg border-2 border-cyan-300 dark:border-cyan-600">
+          <div className="bg-gray-950 rounded p-6 border border-gray-800">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-cyan-700 dark:text-cyan-300">WPM</span>
-              <FaBolt className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+              <span className="text-sm font-medium text-gray-400">WPM</span>
+              <FaBolt className="w-4 h-4 text-gray-400" />
             </div>
-            <div className="text-4xl font-black text-cyan-600 dark:text-cyan-400">{stats.wpm}</div>
+            <div className="text-4xl font-black text-white">{stats.wpm}</div>
           </div>
           
-          <div className="bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100 dark:from-emerald-950 dark:via-green-950 dark:to-emerald-900 
-                          rounded-xl p-6 shadow-lg border-2 border-emerald-300 dark:border-emerald-600">
+          <div className="bg-gray-950 rounded p-6 border border-gray-800">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Accuracy</span>
-              <FaCheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-sm font-medium text-gray-400">Accuracy</span>
+              <FaCheckCircle className="w-4 h-4 text-gray-400" />
             </div>
-            <div className="text-4xl font-black text-emerald-600 dark:text-emerald-400">{stats.accuracy}%</div>
+            <div className="text-4xl font-black text-white">{stats.accuracy}%</div>
           </div>
           
-          <div className="bg-gradient-to-br from-rose-50 via-red-50 to-rose-100 dark:from-rose-950 dark:via-red-950 dark:to-rose-900 
-                          rounded-xl p-6 shadow-lg border-2 border-rose-300 dark:border-rose-600">
+          <div className="bg-gray-950 rounded p-6 border border-gray-800">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-rose-700 dark:text-rose-300">Errors</span>
-              <FaExclamationTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+              <span className="text-sm font-medium text-gray-400">Errors</span>
+              <FaExclamationTriangle className="w-4 h-4 text-gray-400" />
             </div>
-            <div className="text-4xl font-black text-rose-600 dark:text-rose-400">{errors}</div>
+            <div className="text-4xl font-black text-white">{errors}</div>
           </div>
         </div>
       )}
 
       {/* Code Display */}
-      <div className="bg-gray-900 dark:bg-gray-950 rounded-xl p-8 shadow-2xl border border-gray-700">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-700">
+      <div 
+        ref={typingAreaRef}
+        onClick={() => inputRef.current?.focus()}
+        className="bg-black rounded border border-gray-800 p-6 cursor-text transition-shadow hover:shadow-lg hover:shadow-white/5"
+      >
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-            <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-            <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+            <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+            <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
           </div>
-          <span className="text-sm font-mono text-gray-400">solution.js</span>
+          <span className="text-sm font-mono text-gray-500">solution.js</span>
         </div>
-        <pre className="font-mono text-base leading-relaxed whitespace-pre-wrap overflow-x-auto">
+        <div className="font-mono text-base leading-relaxed whitespace-pre-wrap overflow-x-auto select-none">
           {getDisplayText()}
-        </pre>
+        </div>
       </div>
 
       {/* Hidden Input */}
@@ -387,40 +424,52 @@ export default function CodeEditor({
       <div className="flex justify-center space-x-4">
         <button
           onClick={resetTyping}
-          className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-slate-600 to-gray-700 hover:from-slate-700 hover:to-gray-800 
-                     text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200
-                     focus:outline-none focus:ring-4 focus:ring-slate-300"
+          className="flex items-center space-x-2 px-6 py-3 bg-gray-950 hover:bg-white hover:text-black border border-gray-800 hover:border-white 
+                     text-white rounded font-medium transition-all duration-200"
         >
           <FaRedo className="w-4 h-4" />
-          <span>Reset Practice</span>
+          <span>Reset</span>
         </button>
       </div>
 
       {/* Completion Message */}
       {isCompleted && (
-        <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-100 dark:from-emerald-950 dark:via-green-950 dark:to-emerald-900 
-                        border-2 border-emerald-400 dark:border-emerald-600 rounded-xl p-6 shadow-xl">
-          <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center animate-bounce">
-              <FaTrophy className="w-8 h-8 text-white" />
+        <div className="bg-gray-950 border-2 border-white rounded p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-4">
+            <FaTrophy className="w-8 h-8 text-black" />
+          </div>
+          <h2 className="text-4xl font-bold text-white mb-2">
+            Congrats! Your type is...
+          </h2>
+          <div className="text-7xl font-black text-white mb-4">
+            {stats.wpm} WPM
+          </div>
+          <p className="text-xl text-gray-400">
+            {stats.wpm >= 80
+              ? "Lightning fast! You're a coding machine."
+              : stats.wpm >= 60
+              ? "Impressive speed! Keep pushing your limits."
+              : stats.wpm >= 40
+              ? "Solid typing! Practice makes perfect."
+              : "Good start! Keep practicing to improve your type."}
+          </p>
+          <div className="mt-6 pt-6 border-t border-gray-800 flex items-center justify-center space-x-6 text-gray-400">
+            <div>
+              <span className="text-sm">Accuracy</span>
+              <span className="block text-2xl font-bold text-white">{stats.accuracy}%</span>
             </div>
-            <div className="flex-1">
-              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mb-2">
-                {timeMode ? "Time's Up!" : "Congratulations!"}
-              </p>
-              <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">{stats.wpm} WPM</span> • 
-                <span className="font-semibold"> {stats.accuracy}% accuracy</span> • 
-                <span className="font-semibold"> {errors} errors</span>
-              </p>
-              {!isAuthenticated && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 flex items-center space-x-2">
-                  <FaInfoCircle className="w-4 h-4" />
-                  <span>Login to save your progress and track your improvement!</span>
-                </p>
-              )}
+            <div className="w-px h-12 bg-gray-800"></div>
+            <div>
+              <span className="text-sm">Errors</span>
+              <span className="block text-2xl font-bold text-white">{errors}</span>
             </div>
           </div>
+          {!isAuthenticated && (
+            <div className="mt-6 flex items-center justify-center space-x-2 text-sm text-gray-500">
+              <FaInfoCircle className="w-4 h-4" />
+              <span>Login to track your type and see improvements!</span>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -82,16 +82,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop with blur */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md m-4">
+      <div className="relative bg-gray-950 border border-gray-800 rounded p-8 w-full max-w-md m-4">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
         >
           <svg
             className="w-6 h-6"
@@ -109,13 +109,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </button>
 
         {/* Title */}
-        <h2 className="text-2xl font-bold mb-6 text-center">
+        <h2 className="text-3xl font-bold mb-6 text-center text-white">
           {isLogin ? "Login" : "Sign Up"}
         </h2>
 
         {/* Error message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-gray-900 border border-gray-800 text-gray-300 rounded text-sm">
             {error}
           </div>
         )}
@@ -124,7 +124,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-300">
                 Username
               </label>
               <input
@@ -134,13 +134,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
                 }
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600"
+                className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1 text-gray-300">Email</label>
             <input
               type="email"
               required
@@ -148,12 +148,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600"
+              className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
+            <label className="block text-sm font-medium mb-1 text-gray-300">Password</label>
             <input
               type="password"
               required
@@ -161,14 +161,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600"
+              className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
             />
           </div>
 
           {!isLogin && (
             <>
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 text-gray-300">
                   Gender
                 </label>
                 <select
@@ -179,7 +179,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       gender: e.target.value as "MALE" | "FEMALE",
                     })
                   }
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600"
+                  className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
                 >
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
@@ -187,7 +187,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 text-gray-300">
                   College (Optional)
                 </label>
                 <input
@@ -196,7 +196,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   onChange={(e) =>
                     setFormData({ ...formData, college: e.target.value })
                   }
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600"
+                  className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
                 />
               </div>
             </>
@@ -205,21 +205,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50"
+            className="w-full bg-white hover:bg-gray-100 text-black font-medium py-2 px-4 rounded transition disabled:opacity-50"
           >
             {loading ? "Please wait..." : isLogin ? "Login" : "Sign Up"}
           </button>
         </form>
 
         {/* Toggle between login/signup */}
-        <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-4 text-center text-sm text-gray-400">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
             onClick={() => {
               setIsLogin(!isLogin)
               setError("")
             }}
-            className="text-blue-600 hover:underline font-medium"
+            className="text-white hover:underline font-medium"
           >
             {isLogin ? "Sign Up" : "Login"}
           </button>
