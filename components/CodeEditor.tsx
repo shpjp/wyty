@@ -51,6 +51,7 @@ export default function CodeEditor({
   const [isTyping, setIsTyping] = useState(false)
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null)
   const [selectedSolution, setSelectedSolution] = useState<'recursion' | 'memoization' | 'tabulation' | 'spaceOptimized'>('recursion')
+  const [showConstraints, setShowConstraints] = useState(false)
   
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -281,17 +282,26 @@ export default function CodeEditor({
         <div className="bg-[#1a1a1a]/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <a 
-                href={problem.leetcodeUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-3xl font-bold text-white hover:text-yellow-500 transition-colors inline-flex items-center gap-2 group"
-              >
-                {problem.title}
-                <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
+              <div className="flex items-center gap-3">
+                <a 
+                  href={problem.leetcodeUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-3xl font-bold text-white hover:text-yellow-500 transition-colors inline-flex items-center gap-2 group"
+                >
+                  {problem.title}
+                  <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+                <button
+                  onClick={() => setShowConstraints(!showConstraints)}
+                  className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 hover:border-yellow-500/50 flex items-center justify-center text-gray-500 hover:text-yellow-500 transition-all"
+                  title="View constraints"
+                >
+                  <FaInfoCircle className="w-4 h-4" />
+                </button>
+              </div>
               <div className="flex items-center space-x-3 mt-4">
                 <span
                   className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${
@@ -308,6 +318,21 @@ export default function CodeEditor({
                   {problem.category === "DYNAMIC_PROGRAMMING" ? "Dynamic Programming" : "Graph Algorithms"}
                 </span>
               </div>
+              
+              {/* Constraints */}
+              {showConstraints && problem.constraints && (
+                <div className="mt-4 p-4 bg-gray-900/50 border border-gray-800/50 rounded-lg text-sm text-gray-300">
+                  <div className="font-semibold text-yellow-500 mb-2">Constraints:</div>
+                  <ul className="space-y-1">
+                    {problem.constraints.map((constraint, i) => (
+                      <li key={i} className="flex items-start">
+                        <span className="mr-2 text-yellow-500">•</span>
+                        <span>{constraint}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -362,7 +387,7 @@ export default function CodeEditor({
         {/* Time Mode Selection */}
         <div className="bg-[#1a1a1a]/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-12">
           <div className="text-center mb-10">
-            <h3 className="text-6xl font-bold text-white mb-3">ready?</h3>
+            <h3 className="text-5xl font-bold text-white mb-3">let's find your type</h3>
             <p className="text-xl text-gray-500">Choose your duration</p>
           </div>
           
