@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
+import { FaGithub } from "react-icons/fa"
 import Navbar from "@/components/Navbar"
 import AuthModal from "@/components/AuthModal"
 import CodeEditor from "@/components/CodeEditor"
@@ -158,6 +159,23 @@ export default function Home() {
             </div>
           )}
         </main>
+
+        {/* Footer */}
+        <footer className="border-t border-gray-800/50 bg-[#0a0a0a]/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-8 py-6">
+            <div className="flex items-center justify-center">
+              <a
+                href="https://github.com/shpjp/wyty"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-gray-400 hover:text-yellow-500 transition-all group"
+              >
+                <FaGithub className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">View on GitHub</span>
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   )
