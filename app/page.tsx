@@ -68,7 +68,7 @@ export default function Home() {
   }, [session, problem, fetchAttemptLimit])
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a]">
       {/* Auth Modal with backdrop blur */}
       {showAuthModal && !session && (
         <AuthModal
@@ -93,17 +93,29 @@ export default function Home() {
           onLoginClick={useCallback(() => setShowAuthModal(true), [])}
         />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-8 pt-24 pb-12">
           {/* Attempt counter */}
           {session?.user && (
-            <div className="mb-6 bg-gray-950 border border-gray-800 rounded p-3">
+            <div className="mb-8 bg-[#1a1a1a]/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-4 shadow-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-400">
                   Daily Tests Remaining
                 </span>
-                <span className="text-xl font-bold text-white">
-                  {attemptsRemaining}/3
-                </span>
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${
+                          i < attemptsRemaining ? 'bg-yellow-500' : 'bg-gray-700'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xl font-bold text-white">
+                    {attemptsRemaining}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -115,16 +127,16 @@ export default function Home() {
               attemptsRemaining={attemptsRemaining}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6 animate-fade-in">
               {/* Back Button */}
               <button
                 onClick={handleBackToSelection}
-                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors group"
+                className="flex items-center space-x-2 text-gray-400 hover:text-yellow-500 transition-all group"
               >
                 <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="font-medium">Back to Problem Selection</span>
+                <span className="font-medium">Back to Problems</span>
               </button>
 
               <CodeEditor
@@ -138,11 +150,10 @@ export default function Home() {
 
           {/* Guest notice */}
           {!session?.user && (
-            <div className="mt-6 bg-gray-950 border border-gray-800 rounded p-4">
+            <div className="mt-8 bg-[#1a1a1a]/50 backdrop-blur-sm border border-yellow-500/20 rounded-xl p-6 shadow-lg">
               <p className="text-sm text-gray-400">
-                <strong className="text-white">Guest Mode:</strong> You can practice, but your progress
-                won't be saved. Login to track your stats and compete with
-                others!
+                <strong className="text-yellow-500">Guest Mode:</strong> You can practice, but your progress
+                won't be saved. Login to track your stats and improve over time!
               </p>
             </div>
           )}

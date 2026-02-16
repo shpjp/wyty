@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "What's Your Type? - Master Your Coding Speed",
-  description: "Practice typing code to build muscle memory and improve your coding speed. Challenge yourself daily!",
+  title: "wyt? - what's your type | Master Your Coding Speed",
+  description: "Type code at the speed of thought. Practice algorithm solutions, build muscle memory, and improve your coding speed. Challenge yourself daily!",
 };
 
 export default function RootLayout({

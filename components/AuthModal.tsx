@@ -82,16 +82,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop with blur */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-gray-950 border border-gray-800 rounded p-8 w-full max-w-md m-4">
+      <div className="relative bg-[#1a1a1a]/90 backdrop-blur-xl border border-gray-800/50 rounded-xl p-8 w-full max-w-md m-4 shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-gray-500 hover:text-yellow-500 transition-colors"
         >
           <svg
             className="w-6 h-6"
@@ -109,13 +109,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </button>
 
         {/* Title */}
-        <h2 className="text-3xl font-bold mb-6 text-center text-white">
-          {isLogin ? "Login" : "Sign Up"}
+        <h2 className="text-3xl font-bold mb-2 text-center text-white">
+          {isLogin ? "Welcome back" : "Join wyt?"}
         </h2>
+        <p className="text-sm text-gray-500 text-center mb-6">
+          {isLogin ? "Login to track your progress" : "Sign up to save your stats"}
+        </p>
 
         {/* Error message */}
         {error && (
-          <div className="mb-4 p-3 bg-gray-900 border border-gray-800 text-gray-300 rounded text-sm">
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -124,7 +127,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-300">
+              <label className="block text-sm font-medium mb-2 text-gray-400">
                 Username
               </label>
               <input
@@ -134,13 +137,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
+                className="w-full px-4 py-2.5 bg-[#0a0a0a]/80 border border-gray-800/50 rounded-lg text-white focus:border-yellow-500 focus:outline-none transition-colors"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-300">Email</label>
+            <label className="block text-sm font-medium mb-2 text-gray-400">Email</label>
             <input
               type="email"
               required
@@ -148,12 +151,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
+              className="w-full px-4 py-2.5 bg-[#0a0a0a]/80 border border-gray-800/50 rounded-lg text-white focus:border-yellow-500 focus:outline-none transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-300">Password</label>
+            <label className="block text-sm font-medium mb-2 text-gray-400">Password</label>
             <input
               type="password"
               required
@@ -161,14 +164,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
-              className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
+              className="w-full px-4 py-2.5 bg-[#0a0a0a]/80 border border-gray-800/50 rounded-lg text-white focus:border-yellow-500 focus:outline-none transition-colors"
             />
           </div>
 
           {!isLogin && (
             <>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">
+                <label className="block text-sm font-medium mb-2 text-gray-400">
                   Gender
                 </label>
                 <select
@@ -179,7 +182,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       gender: e.target.value as "MALE" | "FEMALE",
                     })
                   }
-                  className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-2.5 bg-[#0a0a0a]/80 border border-gray-800/50 rounded-lg text-white focus:border-yellow-500 focus:outline-none transition-colors"
                 >
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
@@ -187,7 +190,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">
+                <label className="block text-sm font-medium mb-2 text-gray-400">
                   College (Optional)
                 </label>
                 <input
@@ -196,7 +199,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   onChange={(e) =>
                     setFormData({ ...formData, college: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-black border border-gray-800 rounded text-white focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-2.5 bg-[#0a0a0a]/80 border border-gray-800/50 rounded-lg text-white focus:border-yellow-500 focus:outline-none transition-colors"
                 />
               </div>
             </>
@@ -205,21 +208,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-white hover:bg-gray-100 text-black font-medium py-2 px-4 rounded transition disabled:opacity-50"
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 px-4 rounded-lg transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 mt-6"
           >
             {loading ? "Please wait..." : isLogin ? "Login" : "Sign Up"}
           </button>
         </form>
 
         {/* Toggle between login/signup */}
-        <p className="mt-4 text-center text-sm text-gray-400">
+        <p className="mt-6 text-center text-sm text-gray-500">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
             onClick={() => {
               setIsLogin(!isLogin)
               setError("")
             }}
-            className="text-white hover:underline font-medium"
+            className="text-yellow-500 hover:text-yellow-400 font-medium transition-colors"
           >
             {isLogin ? "Sign Up" : "Login"}
           </button>
