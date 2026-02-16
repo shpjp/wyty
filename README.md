@@ -1,4 +1,4 @@
-# DSA TypeMaster 🚀
+# WHAT'S YOUR TYPE ? 
 
 A typing practice platform for Data Structures & Algorithms problems. Build muscle memory by typing DSA solutions, track your WPM, accuracy, and compete with your college peers!
 
